@@ -1,6 +1,7 @@
 all:
-	nasm PruebaImagen.asm -f elf -o PruebaImagen.o
-	nasm bootloader.asm -f bin  -o bootloader.bin
-	ld -m elf_i386 -s PruebaImagen.o
-	objcopy a.out
-	qemu-system-i386 -fda bootloader.bin
+	rm -rf build
+	mkdir build
+	nasm -f bin PruebaTeclado.asm -o build/PruebaTeclado.bin
+	nasm -f bin bootloader_v2.asm -o build/bootloader_v2.bin
+	cat build/bootloader_v2.bin build/PruebaTeclado.bin > build/micromundos.bin
+	qemu-system-i386 -fda build/micromundos.bin
