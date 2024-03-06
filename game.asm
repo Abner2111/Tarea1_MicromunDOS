@@ -279,4 +279,6 @@ drawturtle:
 	ret
 
 end:
-	hlt
+	jmp $
+	nop
+times 512-($-$$) db 0
