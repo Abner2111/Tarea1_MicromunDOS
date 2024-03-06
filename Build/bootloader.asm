@@ -1,3 +1,4 @@
+org 0x7c00
 ;codigo original para el debug del boot loader de Michael Stapelberg https://michael.stapelberg.ch/
 ;codigo original para el bootloader de leeky https://github.com/Pusty/realmode-assembly/tree/master/part2
 ;Configuracion inicial

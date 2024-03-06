@@ -1,3 +1,4 @@
+org 0x8000
 ;codigo original para el dibujado en pantalla de leeky https://0x00sec.org/t/realmode-assembly-writing-bootable-stuff-part-5/3667
 [bits 16]
 mov ah, 0   ;Set display mode

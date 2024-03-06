@@ -1,9 +1,12 @@
 set architecture i8086
+set disassembly-flavor intel
+add-symbol-file bootloader.elf
+add-symbol-file PruebaImagen.elf
 target remote localhost:1234
-symbol-file bootloader.elf
 layout split
 layout src
 layout regs
-
 break *0x7c00
-break end
+break *0x8000
+break end 
+c
