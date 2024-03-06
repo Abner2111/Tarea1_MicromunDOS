@@ -1,7 +1,14 @@
 all:
-	nasm bootloader.asm -f elf32 -F dwarf -o bootloader.o
-	ld -Ttext=0x7c00 -m elf_i386 bootloader.o -o bootloader.elf 
-	objcopy -O binary bootloader.elf bootloader.img
-	unset GTK_PATH
-	qemu-system-i386 bootloader.img -s -S &
-	gdb 
+	rm -rf build
+	mkdir build
+	nasm -f bin ../game.asm -o build/game.bin
+	nasm -f bin ../only_bootloader.asm -o build/bootloader.bin
+	cat build/bootloader.bin build/game.bin > build/micromundos.bin
+	qemu-system-x86_64 -fda build/micromundos.bin
+modular:
+	rm -rf build
+	mkdir build
+	nasm -f bin game.asm -o build/game.bin
+	nasm -f bin only_bootloader.asm -o build/bootloader.bin
+	cat build/bootloader.bin build/game.bin > build/micromundos.bin
+	qemu-system-x86_64 -fda build/micromundos.bin
