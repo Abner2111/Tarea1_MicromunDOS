@@ -20,3 +20,13 @@ q:
 	unset GTK_PATH
 	qemu-system-i386 debug/result.img -s -S &
 	gdb 
+
+q1:
+	rm -rf build
+	mkdir build
+	echo "org 0x7c00"|cat - bootloader.asm>build/bootloader.asm
+	echo "org 0x8000"|cat - game.asm>build/game.asm
+	nasm -f bin build/game.asm -o build/game.bin
+	nasm -f bin build/bootloader.asm -o build/bootloader.bin
+	cat build/bootloader.bin build/game.bin > build/micromundos.bin
+	qemu-system-x86_64 -fda build/micromundos.bin
