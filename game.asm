@@ -2,10 +2,8 @@ org 0x8000
 [bits 16]
 
 section .data 
-    key_buffer      db  16     ;stores pressed keys
-    buffer_index    db  0      ;Index to track next position in buffer
-    key_count       db  0      ;keeps count of pressed keys
-    msg             db  "Arrow Key Pressed!", 0 ; Message to be printed
+    key_pressed db 0     ;stores pressed keys
+
 section .text
     global _start
 
@@ -15,75 +13,46 @@ _start:
     int  0x10   ;Video BIOS Services
 
 
-    xor ax, ax ;setting ax to 0
-
-    ;Setting interrupt vector for keyboard
-    mov ah, 0x25    ;Function to set interrupt vector
-    mov al, 0x09    ;Interrupt vector number
-    mov dx, irq1_handler    ;addredd of keyboard handler
-    int 0x21                ;bios interrupt to set handler
-
-    sti; enable interrupts
-
     
+    
+    ; Set up interrupt vector for keyboard (IRQ1)
+    mov ah, 0x25        ; Function to set interrupt vector
+    mov al, 0x01        ; Interrupt vector number
+    mov dx, irq1_handler ; Address of our keyboard handler
+    int 0x21            ; Call BIOS interrupt to set handler
+
+    ; Enable interrupts
+    xor ax, ax ;setting ax to 0
+    sti
 wait_for_key:
     jmp wait_for_key
 
 irq1_handler:
     in al, 0x60 ; Reads the scan code from the keyboard controller
 
-    ; Check if buffer is full
-    cmp byte [buffer_index], 16
-    je buffer_full
-
-    ; Store the scan code in the buffer
-    mov ebx, buffer_index
-    mov [key_buffer + ebx], al
-
-    ; Increment buffer index
-    inc byte [buffer_index]
-
-    ; Update key count
-    mov ecx, 0
-    mov ebx, 0
+    mov [key_pressed], al
     
+    jmp draw_with_keys
 
-count_keys_loop:
-    
-    cmp byte [key_buffer + ebx], 0
-    je end_count_keys_loop
-    inc ecx
-    inc ebx
-    jmp count_keys_loop
 
-end_count_keys_loop:
-    mov [key_count], cl 
-
-    cmp byte [key_count], 1
-    je draw_with_keys
-    
-buffer_full:
-    iret    
 draw_with_keys:
-    cmp byte [key_buffer], 0x48 ;up
+    cmp byte [key_pressed], 0x48 ;up
     je handle_north
 
-    cmp byte [key_buffer], 0x50 ;down
+    cmp byte [key_pressed], 0x50 ;down
     je handle_south
 
-    cmp byte [key_buffer], 0x4b ;left
+    cmp byte [key_pressed], 0x4b ;left
     je handle_west
-    cmp byte [key_buffer], 0x4d ;right
+
+    cmp byte [key_pressed], 0x4d ;right
     je handle_east
 
-    jmp buffer_full ;nokey
+    jmp done ;nokey
 handle_north:
+    jmp draw_test
     
-    push 11  ;COLOR
-    push 200 ;X-POS
-    push 10  ;Y-POS
-    call drawturtle
-    jmp buffer_full
+    jmp done
 
 handle_south:
   
@@ -91,20 +60,20 @@ handle_south:
     push 90 ;X-POS
     push 10  ;Y-POS
     call drawturtle
-    jmp buffer_full
+    jmp done
 handle_east:
 
     push 11  ;COLOR
     push 00 ;X-POS
     push 10  ;Y-POS
     call drawturtle
-    jmp buffer_full
+    jmp done
 handle_west:
     push 11  ;COLOR
     push 10 ;X-POS
     push 10  ;Y-POS
     call drawturtle
-    jmp buffer_full
+    jmp done
 
 draw_test:
     ;Pruebas del dibujado
@@ -135,7 +104,7 @@ draw_test:
     push 1  ;Y-POS
     call drawturtle
 
-    jmp end;
+    jmp done;
 
 drawBox:
 	pusha
@@ -279,7 +248,8 @@ drawturtle:
 			int 0x10      ;draw pixel!
 	popa
 	ret
-
+done:
+    iret
 end:
 	jmp $
 	nop
