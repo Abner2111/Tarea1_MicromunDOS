@@ -1,5 +1,5 @@
 org 0x7c00
-%define SECTOR_AMOUNT 0X4
+%define SECTOR_AMOUNT 0X10
 jmp short start
 
 start:

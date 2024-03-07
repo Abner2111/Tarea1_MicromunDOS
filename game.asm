@@ -28,28 +28,28 @@ _start:
     
 wait_for_key:
     jmp wait_for_key
-buffer_full:
-    iret
+
 irq1_handler:
-    in al, 0x60 ;reads the scan code from keyboard controller
-    
-    ;check if buffer full
+    in al, 0x60 ; Reads the scan code from the keyboard controller
+
+    ; Check if buffer is full
     cmp byte [buffer_index], 16
     je buffer_full
 
-    ;store scan code in buffer
+    ; Store the scan code in the buffer
     mov ebx, buffer_index
-    mov [key_buffer+ebx], al
+    mov [key_buffer + ebx], al
 
-    ;Increment buffer index
+    ; Increment buffer index
     inc byte [buffer_index]
 
-    ;Update key count
+    ; Update key count
     mov ecx, 0
     mov ebx, 0
     
 
 count_keys_loop:
+    
     cmp byte [key_buffer + ebx], 0
     je end_count_keys_loop
     inc ecx
@@ -57,52 +57,54 @@ count_keys_loop:
     jmp count_keys_loop
 
 end_count_keys_loop:
-    mov [key_count], cl
+    mov [key_count], cl 
+
+    cmp byte [key_count], 1
+    je draw_with_keys
     
-    cmp byte [key_buffer], 0xad ;up
-    je draw0
+buffer_full:
+    iret    
+draw_with_keys:
+    cmp byte [key_buffer], 0x48 ;up
+    je handle_north
 
-    cmp byte [key_buffer], 0xaf ;down
-    je draw1
+    cmp byte [key_buffer], 0x50 ;down
+    je handle_south
 
-    cmp byte [key_buffer], 0xac ;left
-    je draw2
+    cmp byte [key_buffer], 0x4b ;left
+    je handle_west
+    cmp byte [key_buffer], 0x4d ;right
+    je handle_east
 
-    cmp byte [key_buffer], 0xae ;right
-    je draw3
-
-    iret
-
-draw3:
+    jmp buffer_full ;nokey
+handle_north:
     
-    mov ah, 0x09 ; Function to print string
-    mov dx, msg  ; Pointer to the string
-    int 0x21
-    iret
+    push 11  ;COLOR
+    push 200 ;X-POS
+    push 10  ;Y-POS
+    call drawturtle
+    jmp buffer_full
 
-draw2:
+handle_south:
   
     push 11  ;COLOR
     push 90 ;X-POS
     push 10  ;Y-POS
-    call drawBox
     call drawturtle
-    iret
-draw1:
+    jmp buffer_full
+handle_east:
 
     push 11  ;COLOR
     push 00 ;X-POS
     push 10  ;Y-POS
-    call drawBox
     call drawturtle
-    iret
-draw0:
+    jmp buffer_full
+handle_west:
     push 11  ;COLOR
     push 10 ;X-POS
     push 10  ;Y-POS
-    call drawBox
     call drawturtle
-    iret
+    jmp buffer_full
 
 draw_test:
     ;Pruebas del dibujado
