@@ -1,5 +1,6 @@
-org 0x7c00
+[bits 16]
 %define SECTOR_AMOUNT 0X4
+
 jmp short start
 
 start:

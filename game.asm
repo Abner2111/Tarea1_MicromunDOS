@@ -1,8 +1,4 @@
-org 0x8000
 [bits 16]
-
-section .data 
-    key_pressed db 0     ;stores pressed keys
 
 section .text
     global _start
@@ -13,9 +9,9 @@ _start:
     mov al, 13h ;13h = 320x200, 256 colors
     int  0x10   ;Video BIOS Services
 
-    mov ax, 0xb800
-    mov es, ax
+    xor ax, ax
     jmp draw_test
+    
 readNextChar:
     waitForInputLoop:
         nop
@@ -125,7 +121,7 @@ drawBox:
     mul si; mul sobreescribe dx siempre
     mov cx,ax;
 	
-	pop dx; recuperar valor de Y
+    pop dx; recuperar valor de Y
 
     pop ax
 
@@ -172,7 +168,6 @@ drawturtle:
     mul si; mul sobreescribe dx siempre
     mov cx,ax;
 	pop dx;
-	pop ax;
 			;Dibujamos de derecha a izquierda de abajo a arriba
 			;dibujar Linea 6
 			mov bh, 0     ;page number (0 is default)
@@ -245,4 +240,7 @@ drawturtle:
 end:
 	jmp $
 	nop
+	
+section .data 
+    key_pressed db 0     ;stores pressed keys
 times 512-($-$$) db 0
