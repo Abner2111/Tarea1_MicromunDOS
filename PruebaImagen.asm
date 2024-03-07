@@ -33,6 +33,19 @@ push 1 ;X-POS
 push 1  ;Y-POS
 call drawturtle
 
+push 32;
+push 2;
+push 2;
+call drawT
+push 32;
+push 3;
+push 3;
+call drawL
+push 32;
+push 4;
+push 4;
+call drawT
+
 jmp end;
 
 drawBox:
@@ -86,6 +99,62 @@ drawBox:
 	popa
 	ret
 
+drawChar:
+	pusha
+
+	;mover constantes y stackpointer
+    mov si, 8;
+    mov di, 11;
+    mov bx, sp;
+	; recuperar x, y & color
+
+	mov dx, [bx+9*2];
+	mov cx, [bx+9*2+2];
+	mov ax, [bx+9*2+4];
+	add ax, 0xF00;
+	mov bp,ax;
+	 
+
+    push ax; guardar el color
+    ;Escalar Y
+    mov ax, dx;
+    mul si;
+    mov dx,ax;
+
+    push dx; guardar valor de Y
+
+    ;Escalar X
+    mov ax, cx;
+    mul si; mul sobreescribe dx siempre
+    mov cx,ax;
+	
+	pop dx; recuperar valor de Y
+
+    pop ax
+
+
+	push si               ;save x-length
+	.for_x:
+		push di           ;save y-length
+		.for_y:
+			pusha
+			mov al, [bp]
+			mov bh, 0     ;page number (0 is default)
+			add cx, si    ;cx = x-coordinate
+			add dx, di    ;dx = y-coordinate
+			mov ah, 0xC   ;write pixel at coordinate
+			int 0x10      ;draw pixel!
+			add bp,1
+			popa
+		sub di, 1         ;decrease di by one and set flags
+		jnz .for_y        ;repeat for y-length times
+		pop di            ;restore di to y-length
+	sub si, 1             ;decrease si by one and set flags
+	jnz .for_x            ;repeat for x-length times
+	pop si                ;restore si to x-length  -> starting state restored
+	popa
+	ret
+	
 drawturtle:
 	pusha
 	;mover constantes y stackpointer
@@ -176,7 +245,151 @@ drawturtle:
 			int 0x10      ;draw pixel!
 	popa
 	ret
+	
+drawT:
+	pusha
+	;mover constantes y stackpointer
+    mov si, 3;
+    mov di, 3;
+	mov bx, sp;
+	; recuperar x, y del stack
+	mov dx, [bx+9*2];
+	mov cx, [bx+9*2+2];
 
+	;Escalar Y
+    mov ax, dx;
+    mul si;
+    mov dx,ax;
+
+    push dx; guardar valor de Y
+
+    ;Escalar X
+    mov ax, cx;
+    mul si; mul sobreescribe dx siempre
+    mov cx,ax;
+	pop dx;
+			;Dibujamos de derecha a izquierda de abajo a arriba
+			;dibujar Linea 3
+			mov bh, 0     ;page number (0 is default)
+			mov al, 30; Color de la tortuga
+
+			add cx, 1   ;cx = x-coordinate
+			add dx, 2    ;dx = y-coordinate
+			mov ah, 0xC   ;write pixel at coordinate
+			int 0x10      ;draw pixel!
+
+			;Dibujar linea 2
+			add dx, -1    ;dx = y-coordinate
+			int 0x10      ;draw pixel!
+
+			;Dibujar linea 1
+			add dx, -1    ;dx = y-coordinate
+			int 0x10      ;draw pixel!
+			add cx, -1    ;cx = x-coordinate
+			int 0x10      ;draw pixel!
+			add cx, 2    ;cx = x-coordinate
+			int 0x10      ;draw pixel!
+
+	popa
+	ret
+	
+drawL:
+	pusha
+	;mover constantes y stackpointer
+    mov si, 6;
+    mov di, 6;
+	mov bx, sp;
+	; recuperar x, y del stack
+	mov dx, [bx+9*2];
+	mov cx, [bx+9*2+2];
+
+	;Escalar Y
+    mov ax, dx;
+    mul si;
+    mov dx,ax;
+
+    push dx; guardar valor de Y
+
+    ;Escalar X
+    mov ax, cx;
+    mul si; mul sobreescribe dx siempre
+    mov cx,ax;
+	pop dx;
+			;Dibujamos de derecha a izquierda de abajo a arriba
+			;dibujar Linea 3
+			mov bh, 0     ;page number (0 is default)
+			mov al, 30; Color de la tortuga
+
+			add cx, 2   ;cx = x-coordinate
+			add dx, 2    ;dx = y-coordinate
+			mov ah, 0xC   ;write pixel at coordinate
+			int 0x10      ;draw pixel!
+			add cx, -1   ;cx = x-coordinate
+			mov ah, 0xC   ;write pixel at coordinate
+			int 0x10      ;draw pixel!
+			add cx, -1   ;cx = x-coordinate
+			mov ah, 0xC   ;write pixel at coordinate
+			int 0x10      ;draw pixel!
+
+			;Dibujar linea 2
+			add dx, -1    ;dx = y-coordinate
+			int 0x10      ;draw pixel!
+
+			;Dibujar linea 1
+			add dx, -1    ;dx = y-coordinate
+			int 0x10      ;draw pixel!
+
+	popa
+	ret
+	
+drawW:
+	pusha
+	;mover constantes y stackpointer
+    mov si, 6;
+    mov di, 6;
+	mov bx, sp;
+	; recuperar x, y del stack
+	mov dx, [bx+9*2];
+	mov cx, [bx+9*2+2];
+
+	;Escalar Y
+    mov ax, dx;
+    mul si;
+    mov dx,ax;
+
+    push dx; guardar valor de Y
+
+    ;Escalar X
+    mov ax, cx;
+    mul si; mul sobreescribe dx siempre
+    mov cx,ax;
+	pop dx;
+			;Dibujamos de derecha a izquierda de abajo a arriba
+			;dibujar Linea 3
+			mov bh, 0     ;page number (0 is default)
+			mov al, 30; Color de la tortuga
+
+			add cx, 2   ;cx = x-coordinate
+			add dx, 2    ;dx = y-coordinate
+			mov ah, 0xC   ;write pixel at coordinate
+			int 0x10      ;draw pixel!
+			add cx, -1   ;cx = x-coordinate
+			mov ah, 0xC   ;write pixel at coordinate
+			int 0x10      ;draw pixel!
+			add cx, -1   ;cx = x-coordinate
+			mov ah, 0xC   ;write pixel at coordinate
+			int 0x10      ;draw pixel!
+
+			;Dibujar linea 2
+			add dx, -1    ;dx = y-coordinate
+			int 0x10      ;draw pixel!
+
+			;Dibujar linea 1
+			add dx, -1    ;dx = y-coordinate
+			int 0x10      ;draw pixel!
+
+	popa
+	ret
 end:
 	jmp $
 	nop

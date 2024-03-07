@@ -1,4 +1,4 @@
-all: build1
+all:
 	nasm bootloader.asm -f elf32 -F dwarf -o bootloader.o
 	ld -Ttext=0x7c00 -m elf_i386 bootloader.o -o bootloader.elf 
 	nasm PruebaImagen.asm -f elf32 -F dwarf -o PruebaImagen.o

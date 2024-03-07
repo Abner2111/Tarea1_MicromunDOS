@@ -9,4 +9,5 @@ layout regs
 break *0x7c00
 break *0x8000
 break end 
+break drawT
 c
