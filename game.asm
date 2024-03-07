@@ -8,51 +8,44 @@ section .text
     global _start
 
 _start:
+    xor ax, ax ;setting ax to 0
     mov ah, 0   ;Set display mode
     mov al, 13h ;13h = 320x200, 256 colors
     int  0x10   ;Video BIOS Services
 
+    mov ax, 0xb800
+    mov es, ax
+    jmp draw_test
+readNextChar:
+    waitForInputLoop:
+        nop
+        in al, 0x64 ;status byte
 
+        and al, 10b
+
+        jz waitForInputLoop
     
-    
-    ; Set up interrupt vector for keyboard (IRQ1)
-    mov ah, 0x25        ; Function to set interrupt vector
-    mov al, 0x01        ; Interrupt vector number
-    mov dx, irq1_handler ; Address of our keyboard handler
-    int 0x21            ; Call BIOS interrupt to set handler
-
-    ; Enable interrupts
-    xor ax, ax ;setting ax to 0
-    sti
-wait_for_key:
-    jmp wait_for_key
-
-irq1_handler:
-    in al, 0x60 ; Reads the scan code from the keyboard controller
-
-    mov [key_pressed], al
-    
+    in al, 60h
     jmp draw_with_keys
 
-
 draw_with_keys:
-    cmp byte [key_pressed], 0x48 ;up
+    cmp al, byte 0x48 ;up
     je handle_north
 
-    cmp byte [key_pressed], 0x50 ;down
+    cmp al,byte 0x50 ;down
     je handle_south
 
-    cmp byte [key_pressed], 0x4b ;left
+    cmp al, byte 0x4b ;left
     je handle_west
 
-    cmp byte [key_pressed], 0x4d ;right
+    cmp al, byte 0x4d ;right
     je handle_east
 
-    jmp done ;nokey
+    jmp readNextChar
 handle_north:
     jmp draw_test
     
-    jmp done
+    jmp readNextChar
 
 handle_south:
   
@@ -60,20 +53,20 @@ handle_south:
     push 90 ;X-POS
     push 10  ;Y-POS
     call drawturtle
-    jmp done
+    jmp readNextChar
 handle_east:
 
     push 11  ;COLOR
     push 00 ;X-POS
     push 10  ;Y-POS
     call drawturtle
-    jmp done
+    jmp readNextChar
 handle_west:
     push 11  ;COLOR
     push 10 ;X-POS
     push 10  ;Y-POS
     call drawturtle
-    jmp done
+    jmp readNextChar
 
 draw_test:
     ;Pruebas del dibujado
@@ -104,7 +97,7 @@ draw_test:
     push 1  ;Y-POS
     call drawturtle
 
-    jmp done;
+    jmp readNextChar;
 
 drawBox:
 	pusha
@@ -248,8 +241,7 @@ drawturtle:
 			int 0x10      ;draw pixel!
 	popa
 	ret
-done:
-    iret
+
 end:
 	jmp $
 	nop
