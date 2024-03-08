@@ -8,6 +8,9 @@ section .data
     s_color     dw      14
     e_color     dw      15
     w_color     dw      10
+    last_dir    dw      0
+    draw        db      0
+    draw_color  dw      16
 
 section .text
     global _start
@@ -37,10 +40,10 @@ readNextChar:
         int 0x16 ;saves scan code to al
 
         
-    ;in al, 60h 
-    jmp draw_with_keys
+    
+    jmp handle_keys
 
-draw_with_keys:
+handle_keys:
     cmp ah, 0x48 ;up
     je handle_north
 
@@ -53,75 +56,128 @@ draw_with_keys:
     cmp ah,  0x4d ;right
     je handle_east
 
+    cmp ah, 0x39 ;space
+    je handle_space
+
     jmp readNextChar
+
+handle_space:
+    not byte [draw]
+    jmp readNextChar
+
 handle_north:
-    push word [n_color]  ;COLOR  ;COLOR
+    
+    cmp byte [draw],0 ;check draw
+    je not_draw_n
+    jne draw_n
+    not_draw_n:
+    call make_color_black
+    jmp continue_n
+
+
+    draw_n:
+    mov word ax, [n_color]
+    mov word [draw_color], ax
+
+    continue_n:
+    push word [draw_color]  ;COLOR  ;COLOR
     push word [x_coord] ;X-POS
     push word [y_coord]  ;Y-POS
     call drawBox
     pop di;Recordar hacer pop, da igual el registro siempre que no este en uso
     pop di
     pop di
+    
+    change_turtle_pos_n:
+        dec word  [y_coord] ;decrease ycoord
 
-    dec word  [y_coord] ;decrease ycoord
-
-    push word [n_color]  ;COLOR  ;COLOR
-    push word [x_coord] ;X-POS
-    push word [y_coord]  ;Y-POS
-    call drawturtle
-    jmp readNextChar
+        jmp draw_turtle_caller
 
 handle_south:
-  
-    push word [s_color]  ;COLOR  ;COLOR
+    cmp byte [draw],0 ;check draw
+    je not_draw_s
+    jne draw_s
+    not_draw_s:
+    call make_color_black
+    jmp continue_s
+
+    draw_s:
+    mov word ax, [s_color]
+    mov word [draw_color], ax
+
+    continue_s:
+    push word [draw_color] 
     push word [x_coord] ;X-POS
     push word [y_coord]  ;Y-POS
     call drawBox
     pop di;Recordar hacer pop, da igual el registro siempre que no este en uso
     pop di
     pop di
+    change_turtle_pos_s:
+        inc word  [y_coord] ;increase y-coord
 
-    inc word  [y_coord] ;increase y-coord
-
-    push word [s_color]  ;COLOR  ;COLOR
-    push word [x_coord] ;X-POS
-    push word [y_coord]  ;Y-POS
-    call drawturtle
-    jmp readNextChar
+        jmp draw_turtle_caller
 handle_east:
-    
-    push word [e_color]  ;COLOR  
+ 
+    cmp byte [draw],0 ;check draw
+    je not_draw_e
+    jne draw_e
+    not_draw_e:
+    call make_color_black
+    jmp continue_e
+
+    draw_e:
+    mov word ax, [e_color]
+    mov word [draw_color], ax
+
+    continue_e:
+    push word [draw_color]
     push word [x_coord] ;X-POS
     push word [y_coord]  ;Y-POS
     call drawBox
     pop di;Recordar hacer pop, da igual el registro siempre que no este en uso
     pop di
     pop di
+    change_turtle_pos_e:
+        inc word  [x_coord]
 
-    inc word  [x_coord]
-
-    push word [e_color]  ;COLOR  
-    push word [x_coord] ;X-POS
-    push word [y_coord]  ;Y-POS
-    call drawturtle
-    jmp readNextChar
+        jmp draw_turtle_caller
 handle_west:
-    push word [w_color]  ;COLOR  ;COLOR
+    ;check draw variable
+    
+    cmp byte [draw],0 ;check draw
+    je not_draw_w
+    jne draw_w
+    not_draw_w:
+    call make_color_black
+    jmp continue_w
+
+    draw_w:
+    mov word ax, [w_color]
+    mov word [draw_color], ax
+
+    continue_w:
+    push word [draw_color]
     push word [x_coord] ;X-POS
     push word [y_coord]  ;Y-POS
     call drawBox
     pop di;Recordar hacer pop, da igual el registro siempre que no este en uso
     pop di
     pop di
-
+    
     dec word  [x_coord]
-    push word [w_color]  ;COLOR  ;COLOR
+    jmp draw_turtle_caller
+
+draw_turtle_caller:
+    
+    push word [n_color]  ;COLOR  ;COLOR
     push word [x_coord] ;X-POS
     push word [y_coord]  ;Y-POS
     call drawturtle
     jmp readNextChar
-
-
+make_color_black:
+    mov word [draw_color], 16
+    ret
 drawBox:
 	pusha
 
