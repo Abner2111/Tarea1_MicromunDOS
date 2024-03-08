@@ -1,14 +1,29 @@
 [bits 16]
+section .data
+    x_coord     dw      0
+    y_coord     dw      0
+    trtl_color  dw      40
+    n_color     dw      13
+    s_color     dw      14
+    e_color     dw      15
+    w_color     dw      10
 
 section .text
     global _start
 
 _start:
-    xor ax, ax ;setting ax to 0
-    mov ah, 0   ;Set display mode
-    mov al, 13h ;13h = 320x200, 256 colors
-    int  0x10   ;Video BIOS Services
-
+    xor ax, ax      ;setting ax to 0
+    mov ah, 0       ;Set display mode
+    mov al, 13h     ;13h = 320x200, 256 colors
+    int  0x10       ;Video BIOS Services
+    
+    push 11         ;COLOR
+    push word [x_coord]  ;X-POS
+    push word [y_coord]  ;Y-POS
+    call drawturtle
+    pop di          ;Recordar hacer pop, da igual el registro siempre que no este en uso
+    pop di
+    pop di
     
 readNextChar:
     waitForInputLoop:
@@ -39,75 +54,72 @@ draw_with_keys:
 
     jmp readNextChar
 handle_north:
-    push 11  ;COLOR
-    push 80 ;X-POS
-    push 2  ;Y-POS
-    call drawturtle
+    push word [n_color]  ;COLOR  ;COLOR
+    push word [x_coord] ;X-POS
+    push word [y_coord]  ;Y-POS
+    call drawBox
     pop di;Recordar hacer pop, da igual el registro siempre que no este en uso
     pop di
     pop di
+
+    dec word  [y_coord] ;decrease ycoord
+
+    push word [n_color]  ;COLOR  ;COLOR
+    push word [x_coord] ;X-POS
+    push word [y_coord]  ;Y-POS
+    call drawturtle
     jmp readNextChar
 
 handle_south:
   
-    push 12  ;COLOR
-    push 80;X-POS
-    push 30  ;Y-POS
-    call drawturtle
+    push word [s_color]  ;COLOR  ;COLOR
+    push word [x_coord] ;X-POS
+    push word [y_coord]  ;Y-POS
+    call drawBox
     pop di;Recordar hacer pop, da igual el registro siempre que no este en uso
     pop di
     pop di
+
+    inc word  [y_coord] ;increase y-coord
+
+    push word [s_color]  ;COLOR  ;COLOR
+    push word [x_coord] ;X-POS
+    push word [y_coord]  ;Y-POS
+    call drawturtle
     jmp readNextChar
 handle_east:
-
-    push 13  ;COLOR
-    push 90 ;X-POS
-    push 18  ;Y-POS
-    call drawturtle
+    
+    push word [e_color]  ;COLOR  
+    push word [x_coord] ;X-POS
+    push word [y_coord]  ;Y-POS
+    call drawBox
     pop di;Recordar hacer pop, da igual el registro siempre que no este en uso
     pop di
     pop di
+
+    inc word  [x_coord]
+
+    push word [e_color]  ;COLOR  
+    push word [x_coord] ;X-POS
+    push word [y_coord]  ;Y-POS
+    call drawturtle
     jmp readNextChar
 handle_west:
-    push 14  ;COLOR
-    push 70 ;X-POS
-    push 18  ;Y-POS
-    call drawturtle
+    push word [w_color]  ;COLOR  ;COLOR
+    push word [x_coord] ;X-POS
+    push word [y_coord]  ;Y-POS
+    call drawBox
     pop di;Recordar hacer pop, da igual el registro siempre que no este en uso
     pop di
     pop di
+
+    dec word  [x_coord]
+    push word [w_color]  ;COLOR  ;COLOR
+    push word [x_coord] ;X-POS
+    push word [y_coord]  ;Y-POS
+    call drawturtle
     jmp readNextChar
 
-draw_test:
-    ;Pruebas del dibujado
-    push 11  ;COLOR
-    push 1 ;X-POS
-    push 0  ;Y-POS
-    call drawBox
-    call drawturtle
-
-    pop di;Recordar hacer pop, da igual el registro siempre que no este en uso
-    pop di
-    pop di
-    ;este conjunto de instrucciones es equivalente a add sp, -3*2
-
-    push 0x11; color
-    push 1 ;X-POS
-    push 3  ;Y-POS
-    call drawBox
-
-    push 0x16; color
-    push 1 ;X-POS
-    push 2  ;Y-POS
-    call drawturtle
-    call drawBox
-
-    push 0x19; color
-    push 1 ;X-POS
-    push 1  ;Y-POS
-    call drawturtle
-
-    jmp readNextChar;
 
 drawBox:
 	pusha
