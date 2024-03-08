@@ -30,14 +30,14 @@ readNextChar:
     waitForInputLoop:
             
         mov ah, 1
-        int 0x16
+        int 0x16 ;needed for consistent behavior
         jz waitForInputLoop
 
         mov ah, 0
-        int 0x16
+        int 0x16 ;saves scan code to al
 
         
-    in al, 60h
+    ;in al, 60h 
     jmp draw_with_keys
 
 draw_with_keys:
@@ -121,36 +121,6 @@ handle_west:
     call drawturtle
     jmp readNextChar
 
-draw_test:
-    ;Pruebas del dibujado
-    push 11  ;COLOR
-    push 1 ;X-POS
-    push 0  ;Y-POS
-    call drawBox
-    call drawturtle
-
-    pop di;Recordar hacer pop, da igual el registro siempre que no este en uso
-    pop di
-    pop di
-    ;este conjunto de instrucciones es equivalente a add sp, -3*2
-
-    push 0x11; color
-    push 1 ;X-POS
-    push 3  ;Y-POS
-    call drawBox
-
-    push 0x16; color
-    push 1 ;X-POS
-    push 2  ;Y-POS
-    call drawturtle
-    call drawBox
-
-    push 0x19; color
-    push 1 ;X-POS
-    push 1  ;Y-POS
-    call drawturtle
-
-    jmp readNextChar;
 
 drawBox:
 	pusha

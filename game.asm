@@ -29,14 +29,14 @@ readNextChar:
     waitForInputLoop:
             
         mov ah, 1
-        int 0x16
+        int 0x16 ;needed for consistent behavior
         jz waitForInputLoop
 
         mov ah, 0
-        int 0x16
+        int 0x16 ;saves scan code to al
 
         
-    in al, 60h
+    
     jmp draw_with_keys
 
 draw_with_keys:
