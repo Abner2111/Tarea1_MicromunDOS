@@ -10,6 +10,8 @@ section .data
     last_dir    dw      0
     draw        db      0
     draw_color  dw      16
+    seconds     db      0
+    totaltime   dw      0
 
 section .text
     global _start
@@ -20,6 +22,12 @@ _start:
     mov al, 13h     ;13h = 320x200, 256 colors
     int  0x10       ;Video BIOS Services
     
+    ;test
+    mov bx, 255*7;
+    mov [seconds], bx;
+    mov [totaltime],bx;
+    ;test
+    
     push 11         ;COLOR
     push word [x_coord]  ;X-POS
     push word [y_coord]  ;Y-POS
@@ -29,7 +37,10 @@ _start:
     pop di
     
 readNextChar:
+
     waitForInputLoop:
+            
+	call handler_Timer
             
         mov ah, 1
         int 0x16 ;needed for consistent behavior
@@ -177,6 +188,23 @@ draw_turtle_caller:
 make_color_black:
     mov word [draw_color], 16
     ret
+    
+escalate_size:
+    ;Escalar Y
+    mov ax, dx;
+    mul si;
+    mov dx,ax;
+
+    push dx; guardar valor de Y
+
+    ;Escalar X
+    mov ax, cx;
+    mul si; mul sobreescribe dx siempre
+    mov cx,ax;
+    
+    pop dx; recuperar valor de Y
+    ret 
+    
 drawBox:
 	pusha
 
@@ -191,19 +219,8 @@ drawBox:
 	mov al, [bx+9*2+4];
 
     push ax; guardar el color
-    ;Escalar Y
-    mov ax, dx;
-    mul si;
-    mov dx,ax;
-
-    push dx; guardar valor de Y
-
-    ;Escalar X
-    mov ax, cx;
-    mul si; mul sobreescribe dx siempre
-    mov cx,ax;
-	
-    pop dx; recuperar valor de Y
+    
+    call escalate_size
 
     pop ax
 
@@ -231,94 +248,694 @@ drawBox:
 drawturtle:
 	pusha
 	;mover constantes y stackpointer
-    mov si, 6;
-    mov di, 6;
+        mov si, 6;
+        mov di, 6;
 	mov bx, sp;
 	; recuperar x, y del stack
 	mov dx, [bx+9*2];
 	mov cx, [bx+9*2+2];
+  
+    call escalate_size
+		;Dibujamos de derecha a izquierda de abajo a arriba
+		;dibujar Linea 6
+		mov bh, 0     ;page number (0 is default)
+		mov al, 40; Color de la tortuga
 
-	;Escalar Y
-    mov ax, dx;
-    mul si;
-    mov dx,ax;
+		add cx, 6    ;cx = x-coordinate
+		add dx, 6    ;dx = y-coordinate
+		mov ah, 0xC   ;write pixel at coordinate
+		int 0x10      ;draw pixel!
+		add cx, -5    ;cx = x-coordinate
+		int 0x10      ;draw pixel!
 
-    push dx; guardar valor de Y
+		;Dibujar linea 5
+		add cx, 4    ;cx = x-coordinate
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1    ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1    ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1    ;cx = x-coordinate
+		int 0x10      ;draw pixel!
 
-    ;Escalar X
-    mov ax, cx;
-    mul si; mul sobreescribe dx siempre
-    mov cx,ax;
-	pop dx;
-			;Dibujamos de derecha a izquierda de abajo a arriba
-			;dibujar Linea 6
-			mov bh, 0     ;page number (0 is default)
-			mov al, 40; Color de la tortuga
+		;Dibujar linea 4
+		add cx, 4    ;cx = x-coordinate
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1    ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -3    ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1    ;cx = x-coordinate
+		int 0x10      ;draw pixel!
 
-			add cx, 6    ;cx = x-coordinate
-			add dx, 6    ;dx = y-coordinate
-			mov ah, 0xC   ;write pixel at coordinate
-			int 0x10      ;draw pixel!
-			add cx, -5    ;cx = x-coordinate
-			int 0x10      ;draw pixel!
+		;Dibujar linea 3
+		add cx, 5    ;cx = x-coordinate
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1    ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -3    ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1    ;cx = x-coordinate
+		int 0x10      ;draw pixel!
 
-			;Dibujar linea 5
-			add cx, 4    ;cx = x-coordinate
-			add dx, -1    ;dx = y-coordinate
-			int 0x10      ;draw pixel!
-			add cx, -1    ;cx = x-coordinate
-			int 0x10      ;draw pixel!
-			add cx, -1    ;cx = x-coordinate
-			int 0x10      ;draw pixel!
-			add cx, -1    ;cx = x-coordinate
-			int 0x10      ;draw pixel!
+		;Dibujar linea 2
+		add cx, 4    ;cx = x-coordinate
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1    ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1    ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1    ;cx = x-coordinate
+		int 0x10      ;draw pixel!
 
-			;Dibujar linea 4
-			add cx, 4    ;cx = x-coordinate
-			add dx, -1    ;dx = y-coordinate
-			int 0x10      ;draw pixel!
-			add cx, -1    ;cx = x-coordinate
-			int 0x10      ;draw pixel!
-			add cx, -3    ;cx = x-coordinate
-			int 0x10      ;draw pixel!
-			add cx, -1    ;cx = x-coordinate
-			int 0x10      ;draw pixel!
-
-			;Dibujar linea 3
-			add cx, 5    ;cx = x-coordinate
-			add dx, -1    ;dx = y-coordinate
-			int 0x10      ;draw pixel!
-			add cx, -1    ;cx = x-coordinate
-			int 0x10      ;draw pixel!
-			add cx, -3    ;cx = x-coordinate
-			int 0x10      ;draw pixel!
-			add cx, -1    ;cx = x-coordinate
-			int 0x10      ;draw pixel!
-
-			;Dibujar linea 2
-			add cx, 4    ;cx = x-coordinate
-			add dx, -1    ;dx = y-coordinate
-			int 0x10      ;draw pixel!
-			add cx, -1    ;cx = x-coordinate
-			int 0x10      ;draw pixel!
-			add cx, -1    ;cx = x-coordinate
-			int 0x10      ;draw pixel!
-			add cx, -1    ;cx = x-coordinate
-			int 0x10      ;draw pixel!
-
-			;dibujar linea 1
-			add cx, 4    ;cx = x-coordinate
-			add dx, -1    ;dx = y-coordinate
-			int 0x10      ;draw pixel!
-			add cx, -2    ;cx = x-coordinate
-			int 0x10      ;draw pixel!
-			add cx, -1    ;cx = x-coordinate
-			int 0x10      ;draw pixel!
-			add cx, -2    ;cx = x-coordinate
-			int 0x10      ;draw pixel!
+		;dibujar linea 1
+		add cx, 4    ;cx = x-coordinate
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -2    ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1    ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -2    ;cx = x-coordinate
+		int 0x10      ;draw pixel!
 	popa
 	ret
+
+get_text_draw_parameters:
+    ;mover constantes y stackpointer
+    mov si, 4;
+    mov di, 5;
+    mov bx, sp;
+    
+    ; recuperar x, y del stack
+    mov dx, [bx+9*2+2];
+    mov cx, [bx+9*2+2+2];
+    
+    call escalate_size
+    
+    mov bh, 0     ;page number (0 is default)
+    mov al, 30; Color de la tortuga
+    mov ah, 0xC   ;write pixel at coordinate
+    ret
+
+drawT:
+	pusha
+	call get_text_draw_parameters
+	;Dibujamos de derecha a izquierda de abajo a arriba
+		;dibujar Linea 3
+
+		add cx, 1   ;cx = x-coordinate
+		add dx, 2    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+
+		;Dibujar linea 2
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+
+		;Dibujar linea 1
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1    ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, 2    ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+
+	popa
+	ret
+	
+drawL:
+	pusha
+   	call get_text_draw_parameters
+		;Dibujamos de derecha a izquierda de abajo a arriba
+		;dibujar Linea 3
+
+		add cx, 2   ;cx = x-coordinate
+		add dx, 2    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+
+		;Dibujar linea 2
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+
+		;Dibujar linea 1
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+
+	popa
+	ret
+	
+drawW:
+	pusha
+	call get_text_draw_parameters
+	
+		;Dibujamos de derecha a izquierda de abajo a arriba
+		;dibujar Linea 3
+		
+		add cx, 2   ;cx = x-coordinate
+		add dx, 2    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+
+		;Dibujar linea 2
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+
+		;Dibujar linea 1
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+
+	popa
+	ret
+
+draw0:
+    cmp dx, 0;
+    jne return
+    
+    pusha
+    call get_text_draw_parameters
+	;Dibujamos de derecha a izquierda de abajo a arriba
+	;dibujar Linea 3
+
+	add cx, 2   ;cx = x-coordinate
+	add dx, 4    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+	add cx, -1   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+	add cx, -1   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+
+	;Dibujar linea 2
+	add dx, -1    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+	add cx, 2   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+
+	;Dibujar linea 1
+	add dx, -1    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+	add cx, -2   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+
+	;Dibujar linea 1
+	add dx, -1    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+	add cx, 2   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+
+	;Dibujar linea 1
+	add dx, -1    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+	add cx, -1   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+	add cx, -1   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+
+    popa
+    ret
+	
+draw1:
+    cmp dx, 1;
+    jne return
+	pusha
+	call get_text_draw_parameters
+		;Dibujamos de derecha a izquierda de abajo a arriba
+		;dibujar Linea 3
+
+		add cx, 1   ;cx = x-coordinate
+		add dx, 4    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+
+		;Dibujar linea 2
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+
+		;Dibujar linea 1
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+
+		;Dibujar linea 1
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+
+		;Dibujar linea 1
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+
+	popa
+	ret
+	
+draw2:
+    cmp dx, 2;
+    jne return
+	pusha
+	call get_text_draw_parameters
+		;Dibujamos de derecha a izquierda de abajo a arriba
+		;dibujar Linea 3
+		
+		add cx, 2   ;cx = x-coordinate
+		add dx, 4    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		
+
+		;Dibujar linea 2
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+
+		;Dibujar linea 1
+		add dx, -1    ;dx = y-coordinate
+		add cx, 1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+
+		;Dibujar linea 1
+		add dx, -1    ;dx = y-coordinate
+		add cx, 1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+
+		;Dibujar linea 1
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+
+	popa
+	ret	
+draw3:
+    cmp dx, 3;
+    jne return
+	pusha
+	call get_text_draw_parameters
+		;Dibujamos de derecha a izquierda de abajo a arriba
+		;dibujar Linea 3
+
+		
+		add cx, 2   ;cx = x-coordinate
+		add dx, 4    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		
+		;Dibujar linea 1
+		add dx, -1    ;dx = y-coordinate
+		add cx, 2   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+
+		;Dibujar linea 2
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		
+		;Dibujar linea 1
+		add dx, -1    ;dx = y-coordinate
+		add cx, 2   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+
+		;Dibujar linea 2
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+
+	popa
+	ret	
+	
+draw4:
+    cmp dx, 4;
+    jne return
+	pusha
+	call get_text_draw_parameters
+		;Dibujamos de derecha a izquierda de abajo a arriba
+		;Dibujar linea 3
+		
+		add cx, 2   ;cx = x-coordinate
+		add dx, 4    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		
+		;Dibujar linea 1
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+
+		;Dibujar linea 2
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		
+		;Dibujar linea 1
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, 2   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+
+		;Dibujar linea 2
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -2   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+
+	popa
+	ret
+		
+draw5:
+    cmp dx, 5;
+    jne return
+	pusha
+	call get_text_draw_parameters
+		;Dibujamos de derecha a izquierda de abajo a arriba
+		;Dibujar linea 3
+		
+		add cx, 2   ;cx = x-coordinate
+		add dx, 4    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		
+		;Dibujar linea 1
+		add dx, -1    ;dx = y-coordinate
+		add cx, 2   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		
+		;Dibujar linea 2
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, -1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		
+		;Dibujar linea 1
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+
+		;Dibujar linea 2
+		add dx, -1    ;dx = y-coordinate
+		int 0x10      ;draw pixel!
+		add cx, 1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+		add cx, 1   ;cx = x-coordinate
+		int 0x10      ;draw pixel!
+
+	popa
+	ret
+;chat gpt code
+
+draw6:
+    cmp dx, 6;
+    jne return
+    pusha
+    call get_text_draw_parameters
+        ; Draw number 6
+        ;bottom
+        add cx, 2   ; cx = x-coordinate
+        add dx, 4   ; dx = y-coordinate
+        int 0x10    ; draw pixel!
+        add cx, -1  ; cx = x-coordinate
+        int 0x10    ; draw pixel!
+        add cx, -1  ; cx = x-coordinate
+        int 0x10    ; draw pixel!
+
+        ; Draw diagonal line of number 6
+        add dx, -1   ; dx = y-coordinate
+        int 0x10     ; draw pixel!
+        add cx, 2    ; cx = x-coordinate
+        int 0x10     ; draw pixel!
+
+        ; Draw horizontal line of number 6
+        add dx, -1   ; dx = y-coordinate
+        int 0x10    ; draw pixel!
+        add cx, -1  ; cx = x-coordinate
+        int 0x10    ; draw pixel!
+        add cx, -1  ; cx = x-coordinate
+        int 0x10    ; draw pixel!
+        
+        add dx, -1   ; dx = y-coordinate
+        int 0x10     ; draw pixel!
+        
+        ; Draw horizontal line of number 6
+        add dx, -1   ; dx = y-coordinate
+        int 0x10    ; draw pixel!
+
+    popa
+    ret
+
+draw7:
+    cmp dx, 7;
+    jne return
+    pusha
+    call get_text_draw_parameters
+	add cx, 2   ;cx = x-coordinate
+	add dx, 4    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+
+	;Dibujar linea 2
+	add dx, -1    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+
+	;Dibujar linea 1
+	add dx, -1    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+
+	;Dibujar linea 1
+	add dx, -1    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+
+	;Dibujar linea 1
+	add dx, -1    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+	add cx,-1     ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+	add cx,-1     ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+
+    popa
+    ret
+
+draw8:
+    cmp dx, 8;
+    jne return
+    pusha
+    call get_text_draw_parameters
+        ; Draw number 8
+	add cx, 2   ;cx = x-coordinate
+	add dx, 4    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+	add cx, -1   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+	add cx, -1   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+
+	;Dibujar linea 2
+	add dx, -1    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+	add cx, 2   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+
+	;Dibujar linea 1
+	add dx, -1    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+	add cx, -1   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+	add cx, -1   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+
+	;Dibujar linea 1
+	add dx, -1    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+	add cx, 2   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+
+	;Dibujar linea 1
+	add dx, -1    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+	add cx, -1   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+	add cx, -1   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+
+    popa
+    ret
+
+draw9:
+    cmp dx, 9;
+    jne return
+    pusha
+    call get_text_draw_parameters
+        ; Draw number 9
+	add cx, 2   ;cx = x-coordinate
+	add dx, 4    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+
+	;Dibujar linea 2
+	add dx, -1    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+
+	;Dibujar linea 1
+	add dx, -1    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+	add cx, -1   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+	add cx, -1   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+
+	;Dibujar linea 1
+	add dx, -1    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+	add cx, 2   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+
+	;Dibujar linea 1
+	add dx, -1    ;dx = y-coordinate
+	int 0x10      ;draw pixel!
+	add cx, -1   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+	add cx, -1   ;cx = x-coordinate
+	int 0x10      ;draw pixel!
+
+    popa
+    ret
+
+
+;end chat gpt code
+
+
+
+return:
+	ret
+
+drawMiniBox:
+	pusha
+
+	;mover constantes y stackpointer
+    call get_text_draw_parameters
+    mov al, 0;
+
+	push si               ;save x-length
+	.for_x:
+		push di           ;save y-length
+		.for_y:
+			pusha
+			int 0x10      ;draw pixel!
+			add cx, si    ;cx = x-coordinate
+			add cx, -1    ;cx = x-coordinate
+			add dx, di    ;dx = y-coordinate
+			add dx, -1    ;dx = y-coordinate
+			mov ah, 0xC   ;write pixel at coordinate
+			int 0x10      ;draw pixel!
+			popa
+		sub di, 1         ;decrease di by one and set flags
+		jnz .for_y        ;repeat for y-length times
+		pop di            ;restore di to y-length
+	sub si, 1             ;decrease si by one and set flags
+	jnz .for_x            ;repeat for x-length times
+	pop si                ;restore si to x-length  -> starting state restored
+	popa
+	ret
+
+handler_Timer:
+	pusha
+	mov ah, 02h
+	int 1ah
+	mov bx,[seconds]
+	cmp dh, [seconds]
+	je handler_Timer_Not
+	
+	mov [seconds], dh
+	
+	mov ax, [totaltime]
+	add ax, 1
+	mov [totaltime],ax
+	
+	jmp handler_Timer_Print
+	
+	
+handler_Timer_Not:
+	popa
+	ret
+
+handler_Timer_Print:
+	mov dx, 0; 
+	mov bx,0 ;tamaño
+	mov cx, 10; divisor
+	
+	count_time_size:
+		div cx
+		mov dx,0
+		add bx,1
+		cmp ax,0
+		je print_numbers
+		jmp count_time_size
+	
+	print_numbers:
+		mov ax, [totaltime]
+		
+		print_numbers_loop:
+			push bx;
+			push 1;
+			div cx;
+			
+			call drawMiniBox;
+
+			call draw0;
+			
+			call draw1;
+			
+			call draw2;
+			
+			call draw3;
+			
+			call draw4;
+			
+			call draw5;
+			
+			call draw6;
+			
+			call draw7;
+			
+			call draw8;
+			
+			call draw9;
+			
+			pop bx;
+			pop bx;
+			cmp bx, 0;
+			je end_print_loop;
+			mov dx,0;
+			add bx, -1;
+			jmp print_numbers_loop;
+	
+	
+	end_print_loop:
+		popa
+		ret
 
 end:
 	jmp $
 	nop
+times (3*512)-($-$$) db 0 ;kernel must have size multiple of 512 so let's pad it to the correct size
