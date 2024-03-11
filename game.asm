@@ -11,7 +11,8 @@ section .data
     draw        db      0
     draw_color  dw      16
     seconds     db      0
-    totaltime   dw      0
+    totaltime   dw      0x60
+    
 
 section .text
     global _start
@@ -22,11 +23,13 @@ _start:
     mov al, 13h     ;13h = 320x200, 256 colors
     int  0x10       ;Video BIOS Services
     
-    ;test
-    mov bx, 255*7;
-    mov [seconds], bx;
-    mov [totaltime],bx;
-    ;test
+    ;draw menu
+    
+    push 25
+    mov si, MenuCommand
+    call draw_Images
+    pop di
+    
     
     push 11         ;COLOR
     push word [x_coord]  ;X-POS
@@ -77,13 +80,18 @@ handle_space:
 
 handle_north:
     
+        
+    push 10
+    mov si, UpCommand
+    call draw_Images
+    pop di
+    
     cmp byte [draw],0 ;check draw
     je not_draw_n
     jne draw_n
     not_draw_n:
     call make_color_black
     jmp continue_n
-
 
     draw_n:
     mov word ax, [n_color]
@@ -104,6 +112,11 @@ handle_north:
         jmp draw_turtle_caller
 
 handle_south:
+    push 10;write command
+    mov si, DownCommand
+    call draw_Images
+    pop di
+    
     cmp byte [draw],0 ;check draw
     je not_draw_s
     jne draw_s
@@ -111,6 +124,8 @@ handle_south:
     call make_color_black
     jmp continue_s
 
+	
+	
     draw_s:
     mov word ax, [s_color]
     mov word [draw_color], ax
@@ -128,6 +143,13 @@ handle_south:
 
         jmp draw_turtle_caller
 handle_east:
+
+
+
+    push 10
+    mov si, LeftCommand
+    call draw_Images
+    pop di
  
     cmp byte [draw],0 ;check draw
     je not_draw_e
@@ -135,6 +157,7 @@ handle_east:
     not_draw_e:
     call make_color_black
     jmp continue_e
+	
 
     draw_e:
     mov word ax, [e_color]
@@ -153,6 +176,14 @@ handle_east:
 
         jmp draw_turtle_caller
 handle_west:
+	
+	
+	
+    push 10; draw command
+    mov si, RigthCommand
+    call draw_Images
+    pop di
+    
     ;check draw variable
     
     cmp byte [draw],0 ;check draw
@@ -161,7 +192,8 @@ handle_west:
     not_draw_w:
     call make_color_black
     jmp continue_w
-
+	
+	
     draw_w:
     mov word ax, [w_color]
     mov word [draw_color], ax
@@ -869,7 +901,7 @@ handler_Timer:
 	mov [seconds], dh
 	
 	mov ax, [totaltime]
-	add ax, 1
+	add ax, -1
 	mov [totaltime],ax
 	
 	jmp handler_Timer_Print
@@ -934,8 +966,45 @@ handler_Timer_Print:
 	end_print_loop:
 		popa
 		ret
+;code by PUSTY https://github.com/Pusty/realmode-assembly/tree/master/part5 
+draw_Images:
+	pusha
+	    ; recuperar x, y del stack
+
+	xor ax, ax
+	lodsb
+	mov cx, ax                      ;x-length (first byte of binary)
+	lodsb
+	mov dx, ax                      ;y-length (2nd byte of binary)
+	
+	mov bx, sp;
+    	mov bx, [bx+9*2];			
+    	mov bh, 0               ;page number (0 is default)
+	.for_x:
+		push dx
+		.for_y:
+		
+			add dx, bx	
+			lodsb                   ;read byte to al (color) -> next byte
+			mov ah, 0xC             ;write pixel at coordinate (cx, dx)
+			int 0x10                ;draw!
+			sub dx, bx
+		sub dx, 1                   ;decrease dx by one and set flags
+		jnz .for_y                  ;repeat for y-length
+		pop dx                      ;restore dx (y-length)
+
+	sub cx, 1                       ;decrease si by one and set flags
+	jnz .for_x                      ;repeat for x-length
+	popa                            ;restore everything
+	ret
 
 end:
 	jmp $
 	nop
-times (3*512)-($-$$) db 0 ;kernel must have size multiple of 512 so let's pad it to the correct size
+	
+LeftCommand: incbin "LeftCommand.bin"
+DownCommand: incbin "DownCommand.bin"
+RigthCommand: incbin "RigthCommand.bin"
+UpCommand: incbin "UpCommand.bin"
+MenuCommand: incbin "MenuCommand.bin"
+times (6*512)-($-$$) db 0 ;kernel must have size multiple of 512 so let's pad it to the correct size

@@ -1,5 +1,5 @@
 [bits 16]
-%define SECTOR_AMOUNT 0X4
+%define SECTOR_AMOUNT 0X6
 
 jmp short start
 
