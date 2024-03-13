@@ -54,6 +54,11 @@ _start:
     mov si, MenuCommand
     call draw_Images
     pop di
+    
+    push 50
+    mov si, MenuCommand2
+    call draw_Images
+    pop di
 
 	mov word [n_color], 13
 	mov word [s_color], 14
@@ -65,9 +70,19 @@ _start:
     mov word [sw_color],64
 	mov byte [seconds], 1
     mov byte [totaltime], 1
-
-	mov word [x_coord], 27
-	mov word [y_coord], 17
+	
+	
+	;set random pos
+    mov ah, 02h
+    int 1ah;
+    mov ax, dx;
+    
+    mov si, ax;
+    mov di, cx;
+    call escalate_size
+    
+    mov [x_coord], cx;
+    mov [y_coord], dx;
     ;set timer
     mov ax, 50
     mov [totaltime],ax
@@ -393,7 +408,7 @@ handle_west:
 handle_north_east:
     
     push 10
-    mov si, UpCommand
+    mov si, DCommand
     call draw_Images
     pop di
     
@@ -457,7 +472,7 @@ handle_north_east:
 handle_north_west:
     
     push 10
-    mov si, UpCommand
+    mov si, ACommand
     call draw_Images
     pop di
     
@@ -522,7 +537,7 @@ handle_north_west:
 handle_south_west:
     
     push 10
-    mov si, UpCommand
+    mov si, QCommand
     call draw_Images
     pop di
     
@@ -586,7 +601,7 @@ handle_south_west:
 handle_south_east:
     
     push 10
-    mov si, UpCommand
+    mov si, ECommand
     call draw_Images
     pop di
     
@@ -782,4 +797,4 @@ end:
 	jmp $
 	nop
 %include "DrawFunctions.asm";
-times (8*512)-($-$$) db 0 ;kernel must have size multiple of 512 so let's pad it to the correct size
+times (10*512)-($-$$) db 0 ;kernel must have size multiple of 512 so let's pad it to the correct size
