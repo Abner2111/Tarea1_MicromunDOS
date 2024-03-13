@@ -63,6 +63,7 @@ _start:
     call draw_Images
     pop di
 
+    ;INICIALIZACION DE VARIABLES
 	mov word [n_color], 13
 	mov word [s_color], 14
 	mov word [e_color], 15
@@ -91,6 +92,7 @@ _start:
     mov ax, 50
     mov [totaltime],ax
     
+    ;DIBUJAR TORTUGA
     push 11         ;COLOR
     push word [x_coord]  ;X-POS
     push word [y_coord]  ;Y-POS
