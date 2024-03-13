@@ -60,6 +60,7 @@ drawturtle:
 	pusha
 	;mover constantes y stackpointer
         mov si, 6;
+        mov si, 6;
         mov di, 6;
 	mov bx, sp;
 	; recuperar x, y del stack
@@ -734,7 +735,115 @@ draw_Images:
 	jnz .for_x                      ;repeat for x-length
 	popa                            ;restore everything
 	ret
+animation_loop:
 	
+	color1:
+		mov word ax, [pixel_color]
+		add word ax, [draw]
+		push word ax
+		push word [x_coord]
+		push word [y_coord]
+		call drawBox
+		pop di
+		pop di
+		pop di
+		add word [x_coord], 1
+	; Wait for a short delay
+    mov cx, 1
+    mov ah, 86h
+    int 15h
+
+	color2:
+		mov word ax, [pixel_color]
+		add word ax, [draw]
+		push word ax
+		push word [x_coord]
+		push word [y_coord]
+		call drawBox
+		pop di
+		pop di
+		pop di
+		add word [y_coord], 1
+	; Wait for a short delay
+    mov cx, 1
+    mov ah, 86h
+    int 15h
+
+	color3:
+		mov word ax, [pixel_color]
+		add word ax, [draw]
+		push word ax
+		push word [x_coord]
+		push word [y_coord]
+		call drawBox
+		pop di
+		pop di
+		pop di
+		add word [x_coord], -1
+	; Wait for a short delay
+    mov cx, 1
+    mov ah, 86h
+    int 15h
+	color4:
+		mov word ax, [pixel_color]
+		add word ax, [draw]
+		push word ax
+		push word [x_coord]
+		push word [y_coord]
+		call drawBox
+		pop di
+		pop di
+		pop di
+		add word [y_coord], -1
+		
+	; Wait for a short delay
+    mov cx, 1
+    mov ah, 86h
+    int 15h
+	erase:
+		push word [black_color]
+		push word [x_coord]
+		push word [y_coord]
+		call drawBox
+		pop di
+		pop di
+		pop di
+
+		add word [x_coord], 1
+		
+		push word [black_color]
+		push word [x_coord]
+		push word [y_coord]
+		call drawBox
+		pop di
+		pop di
+		pop di
+
+		add word [y_coord], 1
+
+		push word [black_color]
+		push word [x_coord]
+		push word [y_coord]
+		call drawBox
+		pop di
+		pop di
+		pop di
+
+		add word [x_coord], -1
+
+		push word [black_color]
+		push word [x_coord]
+		push word [y_coord]
+		call drawBox
+		pop di
+		pop di
+		pop di
+
+		add word [y_coord], -1
+	dec byte [draw]
+	cmp byte [draw],0
+    jne animation_loop
+	ret
 LeftCommand: incbin "LeftCommand.bin"
 DownCommand: incbin "DownCommand.bin"
 RigthCommand: incbin "RigthCommand.bin"

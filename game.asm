@@ -11,13 +11,19 @@ section .data
     last_dir    dw      0
     draw_color  dw      0
 	pixel_color dw      0
+	padding 	dw 		0
     seconds     db      1
     totaltime   db      1
-	paddngColor   dw		0
+	paddngColor dw		0
 	n_color     dw      13
     s_color     dw      14
     e_color     dw      15
     w_color     dw      10
+    ne_color    dw      43
+    nw_color    dw      1
+    se_color    dw      11
+    sw_color    dw      64
+
 
 section .text
 _start:
@@ -25,12 +31,21 @@ _start:
     mov ah, 0       ;Set display mode
     mov al, 13h     ;13h = 320x200, 256 colors
     int  0x10       ;Video BIOS Services
+    ;draw menu
+
+    push 25
+    mov si, MenuCommand
+    call draw_Images
+    pop di
 
 	mov word [n_color], 13
 	mov word [s_color], 14
 	mov word [e_color], 15
 	mov word [w_color], 10
-
+    mov word [ne_color],43
+    mov word [nw_color],1
+    mov word [se_color],11
+    mov word [sw_color],64
 	mov byte [seconds], 1
     mov byte [totaltime], 1
 
@@ -41,11 +56,7 @@ _start:
     mov [totaltime],ax
     
 
-    ;draw menu
-    push 25
-    mov si, MenuCommand
-    call draw_Images
-    pop di
+    
     
     
     push 11         ;COLOR
@@ -71,17 +82,29 @@ readNextChar:
     jmp handle_keys
 
 handle_keys:
-    cmp ah, 0x48 ;up
+    cmp ah, 0x48 ;up n
     je handle_north
 
-    cmp ah,0x50 ;down
+    cmp ah,0x50 ;down s
     je handle_south
 
-    cmp ah, 0x4b ;left
+    cmp ah, 0x4b ;<- west
     je handle_west
 
-    cmp ah,  0x4d ;right
+    cmp ah,  0x4d ;-> east
     je handle_east
+
+	cmp ah,  0x20 ;d ne
+    je handle_north_east
+
+	cmp ah,  0x1e ;a nw
+    je handle_east
+
+	cmp ah,  0x12 ;e se
+    je handle_south_east
+
+	cmp ah,  0x10 ;q sw 
+    je handle_south_west
 
     cmp ah, 0x39 ;space
     je handle_space
@@ -94,11 +117,11 @@ handle_keys:
 handle_space:
     not byte [draw]
     jmp readNextChar
-handle_restart:
-	mov ax, 0xA000
-	mov es, ax
 
-	mov cx, 0
+handle_restart:
+	nop
+	call setScreenToBlack
+	nop
 	call print_win
 	call setScreenToBlack
 	jmp _start
@@ -354,9 +377,204 @@ handle_west:
         dec word  [x_coord]
         mov byte [last_dir], 0x4b
         jmp draw_turtle_caller
+
+handle_north_east:
+    
+    push 10
+    mov si, UpCommand
+    call draw_Images
+    pop di
+    
+    cmp byte [draw],0 ;check draw
+    je not_draw_ne
+    jne draw_ne
+    not_draw_ne:
+	call make_color_black
+	jmp continue_ne
+
+    
+    draw_ne:
+        cmp byte [last_dir], 0x10   ;check if last dir was sw 
+        je back_to_north_east_color                   ;if last dir was south dont check color
+        
+
+        check_north_east_color:
+
+            ;CHECKING PIXEL COLOR
+            mov word ax, [y_coord] ;moving y_cord to ax
+            add word ax, -1 ;the next y coord place where the turtle will be
+            mov word cx, [x_coord] ;mov next to x_coord
+            mov word dx, ax
+            add word cx, 1
+            add word cx, 1 ;offset
+            add word dx, 1 ;offset
+            ;scaling to turtle size
+            mov ax, 6
+            imul cx, ax
+            imul dx, ax
+
+            call getPixelColor
+            
+            mov byte [pixel_color], al
+
+            cmp byte [black_color], al     ;si el color es negro, continuar a dibujar en color norte
+            je back_to_north_east_color
+           
+			jmp handle_restart
+
+            
+        
+        back_to_north_east_color:
+        mov word ax, [ne_color]
+        mov word [draw_color], ax
+
+        continue_ne:
+        push word [draw_color]  ;COLOR  ;COLOR
+        push word [x_coord] ;X-POS
+        push word [y_coord]  ;Y-POS
+        call drawBox
+        pop di
+        pop di
+        pop di
+        
+        change_turtle_pos_ne:
+            dec word    [y_coord] ;decrease ycoord
+            inc word    [x_coord] ;increase xcoord
+			mov byte    [last_dir],0x20
+            jmp draw_turtle_caller
+
+handle_south_west:
+    
+    push 10
+    mov si, UpCommand
+    call draw_Images
+    pop di
+    
+    cmp byte [draw],0 ;check draw
+    je not_draw_sw
+    jne draw_sw
+    not_draw_sw:
+	call make_color_black
+	jmp continue_sw
+
+    
+    draw_sw:
+        cmp byte [last_dir], 0x20   ;check if last dir was sw 
+        je back_to_south_west_color                   ;if last dir was south dont check color
+        
+
+        check_south_west_color:
+
+            ;CHECKING PIXEL COLOR
+            mov word ax, [y_coord] ;moving y_cord to ax
+            add word ax, 1 ;the next y coord place where the turtle will be
+            mov word cx, [x_coord] ;mov next to x_coord
+            mov word dx, ax
+            add word cx, -1
+            add word cx, 1 ;offset
+            add word dx, 1 ;offset
+            ;scaling to turtle size
+            mov ax, 6
+            imul cx, ax
+            imul dx, ax
+
+            call getPixelColor
+            
+            mov byte [pixel_color], al
+
+            cmp byte [black_color], al     ;si el color es negro, continuar a dibujar en color norte
+            je back_to_south_west_color
+           
+			jmp handle_restart
+
+            
+        
+        back_to_south_west_color:
+        mov word ax, [sw_color]
+        mov word [draw_color], ax
+
+        continue_sw:
+        push word [draw_color]  ;COLOR  ;COLOR
+        push word [x_coord] ;X-POS
+        push word [y_coord]  ;Y-POS
+        call drawBox
+        pop di
+        pop di
+        pop di
+        
+        change_turtle_pos_sw:
+            inc word    [y_coord] ;decrease ycoord
+            dec word    [x_coord] ;increase xcoord
+			mov byte    [last_dir],0x10
+            jmp draw_turtle_caller
+handle_south_east:
+    
+    push 10
+    mov si, UpCommand
+    call draw_Images
+    pop di
+    
+    cmp byte [draw],0 ;check draw
+    je not_draw_se
+    jne draw_se
+    not_draw_se:
+	call make_color_black
+	jmp continue_se
+
+    
+    draw_se:
+        cmp byte [last_dir], 0x1e   ;check if last dir was sw 
+        je back_to_south_east_color                   ;if last dir was south dont check color
+        
+
+        check_south_east_color:
+
+            ;CHECKING PIXEL COLOR
+            mov word ax, [y_coord] ;moving y_cord to ax
+            add word ax, 1 ;the next y coord place where the turtle will be
+            mov word cx, [x_coord] ;mov next to x_coord
+            mov word dx, ax
+            add word cx, 1
+            add word cx, 1 ;offset
+            add word dx, 1 ;offset
+            ;scaling to turtle size
+            mov ax, 6
+            imul cx, ax
+            imul dx, ax
+
+            call getPixelColor
+            
+            mov byte [pixel_color], al
+
+            cmp byte [black_color], al     ;si el color es negro, continuar a dibujar en color norte
+            je back_to_south_east_color
+           
+			jmp handle_restart
+
+            
+        
+        back_to_south_east_color:
+        mov word ax, [se_color]
+        mov word [draw_color], ax
+
+        continue_se:
+        push word [draw_color]  ;COLOR  ;COLOR
+        push word [x_coord] ;X-POS
+        push word [y_coord]  ;Y-POS
+        call drawBox
+        pop di
+        pop di
+        pop di
+        
+        change_turtle_pos_se:
+            inc word    [y_coord] ;decrease ycoord
+            inc word    [x_coord] ;increase xcoord
+			mov byte    [last_dir],0x10
+            jmp draw_turtle_caller
+
 draw_turtle_caller:
     
-    push word [n_color]  ;COLOR  ;COLOR
+    push word [draw_color]  ;COLOR  ;COLOR
     push word [x_coord] ;X-POS
     push word [y_coord]  ;Y-POS
     call drawturtle
@@ -458,115 +676,7 @@ print_win:
 	add word [pixel_color], -10
 	call animation_loop
 	ret
-animation_loop:
-	
-	color1:
-		mov word ax, [pixel_color]
-		add word ax, [draw]
-		push word ax
-		push word [x_coord]
-		push word [y_coord]
-		call drawBox
-		pop di
-		pop di
-		pop di
-		add word [x_coord], 1
-	; Wait for a short delay
-    mov cx, 1
-    mov ah, 86h
-    int 15h
 
-	color2:
-		mov byte ax, [pixel_color]
-		add byte ax, [draw]
-		push word ax
-		push word [x_coord]
-		push word [y_coord]
-		call drawBox
-		pop di
-		pop di
-		pop di
-		add word [y_coord], 1
-	; Wait for a short delay
-    mov cx, 1
-    mov ah, 86h
-    int 15h
-
-	color3:
-		mov word ax, [pixel_color]
-		add word ax, [draw]
-		push word ax
-		push word [x_coord]
-		push word [y_coord]
-		call drawBox
-		pop di
-		pop di
-		pop di
-		add word [x_coord], -1
-	; Wait for a short delay
-    mov cx, 1
-    mov ah, 86h
-    int 15h
-	color4:
-		mov word ax, [pixel_color]
-		add word ax, [draw]
-		push word ax
-		push word [x_coord]
-		push word [y_coord]
-		call drawBox
-		pop di
-		pop di
-		pop di
-		add word [y_coord], -1
-		
-	; Wait for a short delay
-    mov cx, 1
-    mov ah, 86h
-    int 15h
-	erase:
-		push word [black_color]
-		push word [x_coord]
-		push word [y_coord]
-		call drawBox
-		pop di
-		pop di
-		pop di
-
-		add word [x_coord], 1
-		
-		push word [black_color]
-		push word [x_coord]
-		push word [y_coord]
-		call drawBox
-		pop di
-		pop di
-		pop di
-
-		add word [y_coord], 1
-
-		push word [black_color]
-		push word [x_coord]
-		push word [y_coord]
-		call drawBox
-		pop di
-		pop di
-		pop di
-
-		add word [x_coord], -1
-
-		push word [black_color]
-		push word [x_coord]
-		push word [y_coord]
-		call drawBox
-		pop di
-		pop di
-		pop di
-
-		add word [y_coord], -1
-	dec byte [draw]
-	cmp byte [draw],0
-    jne animation_loop
-	ret
 getPixelColor:
         ; Inputs:
         ;   CX = x-coordinate
