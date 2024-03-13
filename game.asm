@@ -729,9 +729,36 @@ make_color_black:
     mov word [draw_color], 0
     ret
 
+handler_draw_state:
+	push 17
+	cmp byte [erase_flag], 0;
+	jne erase_on
+	cmp byte [draw],0;
+	jne draw_on
+	mov si, NothingCommand
+	call draw_Images
+	pop di
+	ret
+	
+draw_on:
+	mov si, DrawCommand
+	call draw_Images
+	pop di
+    ret
+
+erase_on:
+	mov si, EraseCommand
+	call draw_Images
+	pop di
+    ret
+
+
 
 handler_Timer:
 	pusha
+	
+	call handler_draw_state
+	
 	mov ah, 02h
 	int 1ah
 	mov bx,[seconds]

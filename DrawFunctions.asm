@@ -862,7 +862,7 @@ print_start:
 		; Repeat for next character
 		jmp print_loop
 	print_done:
-	ret												
+	ret											
 LeftCommand: incbin "LeftCommand.bin"
 DownCommand: incbin "DownCommand.bin"
 RigthCommand: incbin "RigthCommand.bin"
@@ -874,3 +874,7 @@ ECommand: incbin "ECommand.bin"
 ACommand: incbin "ACommand.bin"
 DCommand: incbin "DCommand.bin"
 MenuCommand2: incbin "MenuCommand2.bin"
+
+EraseCommand: incbin "Erase.bin"
+DrawCommand: incbin "Draw.bin"
+NothingCommand: incbin "Nothing.bin"
