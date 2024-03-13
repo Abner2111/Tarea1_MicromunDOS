@@ -3,6 +3,7 @@
 
 section .data
 	draw        db      0
+	pos_paddng	db		0
     x_coord     dw      27
     y_coord     dw      17
     trtl_color  dw      40
@@ -12,7 +13,7 @@ section .data
 	pixel_color dw      0
     seconds     db      1
     totaltime   db      1
-	paddingColor   dw		0
+	paddngColor   dw		0
 	n_color     dw      13
     s_color     dw      14
     e_color     dw      15
@@ -24,16 +25,22 @@ _start:
     mov ah, 0       ;Set display mode
     mov al, 13h     ;13h = 320x200, 256 colors
     int  0x10       ;Video BIOS Services
-    mov word [n_color], 13
+
 	mov word [n_color], 13
 	mov word [s_color], 14
 	mov word [e_color], 15
 	mov word [w_color], 10
+
+	mov byte [seconds], 1
+    mov byte [totaltime], 1
+
+	mov word [x_coord], 27
+	mov word [y_coord], 17
     ;set timer
     mov ax, 50
     mov [totaltime],ax
     
-	call setScreenToBlack
+
     ;draw menu
     push 25
     mov si, MenuCommand
@@ -61,9 +68,6 @@ readNextChar:
 
         mov ah, 0
         int 0x16 ;saves scan code to al
-
-        
-    
     jmp handle_keys
 
 handle_keys:
@@ -82,11 +86,22 @@ handle_keys:
     cmp ah, 0x39 ;space
     je handle_space
 
+	cmp ah, 0x13 ;R
+    je handle_restart
+
     jmp readNextChar
 
 handle_space:
     not byte [draw]
     jmp readNextChar
+handle_restart:
+	mov ax, 0xA000
+	mov es, ax
+
+	mov cx, 0
+	call print_win
+	call setScreenToBlack
+	jmp _start
 
 handle_north:
     
@@ -134,14 +149,9 @@ handle_north:
             cmp byte [s_color],al
             je back_to_north_color
 			
+			jmp handle_restart
 
-            push word [pixel_color]
-            push word 0 ;X-POS
-            push word 0  ;Y-POS
-            call drawBox
-            pop di;Recordar hacer pop, da igual el registro siempre que no este en uso
-            pop di
-            pop di
+            
         
         back_to_north_color:
         mov word ax, [n_color]
@@ -203,13 +213,7 @@ handle_south:
             je back_to_south_color
 
 
-            push word [pixel_color]
-            push word 0 ;X-POS
-            push word 0  ;Y-POS
-            call drawBox
-            pop di;Recordar hacer pop, da igual el registro siempre que no este en uso
-            pop di
-            pop di
+            jmp handle_restart
         back_to_south_color:
         mov word ax, [s_color]
         mov word [draw_color], ax
@@ -271,13 +275,7 @@ handle_east:
             je back_to_east_color
 
 
-            push word [pixel_color]
-            push word 0 ;X-POS
-            push word 0  ;Y-POS
-            call drawBox
-            pop di;Recordar hacer pop, da igual el registro siempre que no este en uso
-            pop di
-            pop di
+            jmp handle_restart
         back_to_east_color:
         mov word ax, [e_color]
         mov word [draw_color], ax
@@ -339,13 +337,7 @@ handle_west:
             je back_to_west_color
 
 
-            push word [pixel_color]
-            push word 0 ;X-POS
-            push word 0  ;Y-POS
-            call drawBox
-            pop di;Recordar hacer pop, da igual el registro siempre que no este en uso
-            pop di
-            pop di
+            jmp handle_restart
         back_to_west_color:
         mov word ax, [w_color]
         mov word [draw_color], ax
@@ -459,6 +451,122 @@ handler_Timer_Print:
 		pop di
 		popa
 		ret
+print_win:	
+	mov word [x_coord], 26
+	mov word [y_coord], 16
+	mov word [draw],	10
+	add word [pixel_color], -10
+	call animation_loop
+	ret
+animation_loop:
+	
+	color1:
+		mov word ax, [pixel_color]
+		add word ax, [draw]
+		push word ax
+		push word [x_coord]
+		push word [y_coord]
+		call drawBox
+		pop di
+		pop di
+		pop di
+		add word [x_coord], 1
+	; Wait for a short delay
+    mov cx, 1
+    mov ah, 86h
+    int 15h
+
+	color2:
+		mov byte ax, [pixel_color]
+		add byte ax, [draw]
+		push word ax
+		push word [x_coord]
+		push word [y_coord]
+		call drawBox
+		pop di
+		pop di
+		pop di
+		add word [y_coord], 1
+	; Wait for a short delay
+    mov cx, 1
+    mov ah, 86h
+    int 15h
+
+	color3:
+		mov word ax, [pixel_color]
+		add word ax, [draw]
+		push word ax
+		push word [x_coord]
+		push word [y_coord]
+		call drawBox
+		pop di
+		pop di
+		pop di
+		add word [x_coord], -1
+	; Wait for a short delay
+    mov cx, 1
+    mov ah, 86h
+    int 15h
+	color4:
+		mov word ax, [pixel_color]
+		add word ax, [draw]
+		push word ax
+		push word [x_coord]
+		push word [y_coord]
+		call drawBox
+		pop di
+		pop di
+		pop di
+		add word [y_coord], -1
+		
+	; Wait for a short delay
+    mov cx, 1
+    mov ah, 86h
+    int 15h
+	erase:
+		push word [black_color]
+		push word [x_coord]
+		push word [y_coord]
+		call drawBox
+		pop di
+		pop di
+		pop di
+
+		add word [x_coord], 1
+		
+		push word [black_color]
+		push word [x_coord]
+		push word [y_coord]
+		call drawBox
+		pop di
+		pop di
+		pop di
+
+		add word [y_coord], 1
+
+		push word [black_color]
+		push word [x_coord]
+		push word [y_coord]
+		call drawBox
+		pop di
+		pop di
+		pop di
+
+		add word [x_coord], -1
+
+		push word [black_color]
+		push word [x_coord]
+		push word [y_coord]
+		call drawBox
+		pop di
+		pop di
+		pop di
+
+		add word [y_coord], -1
+	dec byte [draw]
+	cmp byte [draw],0
+    jne animation_loop
+	ret
 getPixelColor:
         ; Inputs:
         ;   CX = x-coordinate
@@ -475,24 +583,15 @@ getPixelColor:
         mov ax, [es:di]  ; AL register now holds the color value
         ret
 setScreenToBlack:
-        ; Video memory address in Mode 13h is 0xA0000
-        mov ax, 0xA000
-        mov es, ax  ; Set ES segment register to video memory segment
-        ; Calculate the total number of pixels on the screen (320x200)
-        mov cx, 320      ; Width of the screen in pixels
-        mov dx, 200      ; Height of the screen in pixels
-        mul cx           ; Multiply width by height to get total pixels
-        ; Fill video memory with white color index (0xFF)
-        mov di, 0        ; DI register is the offset in video memory
-        mov al, [black_color]     ; Color index for white
-    fillLoop:
-        ; Write the white color index to video memory
-        mov [es:di], al
-        ; Move to the next pixel
-        inc di
-        ; Check if all pixels have been processed
-        loop fillLoop
-        ret
+	xor di, di
+	xor al,al
+	mov cx, 320*200
+    clear_loop:
+    stosb  ; Store black color (AL) at ES:DI
+    inc di  ; Move to the next pixel
+    loop clear_loop  ; Repeat until all pixels are cleared
+	ret
+
 end:
 	jmp $
 	nop
