@@ -132,9 +132,9 @@ handle_space:
     jmp readNextChar
 
 handle_restart:
-	nop
+	
 	call setScreenToBlack
-	nop
+	
 	call print_win
 	call setScreenToBlack
 	jmp _start
@@ -770,13 +770,13 @@ getPixelColor:
         mov ax, [es:di]  ; AL register now holds the color value
         ret
 setScreenToBlack:
-	xor di, di
-	xor al,al
-	mov cx, 320*200
-    clear_loop:
-    stosb  ; Store black color (AL) at ES:DI
-    inc di  ; Move to the next pixel
-    loop clear_loop  ; Repeat until all pixels are cleared
+	mov ax, 0003h
+    int 10h
+
+    xor ax, ax      ;setting ax to 0
+    mov ah, 0       ;Set display mode
+    mov al, 13h     ;13h = 320x200, 256 colors
+    int  0x10       ;Video BIOS Services
 	ret
 
 end:
