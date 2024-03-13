@@ -10,7 +10,9 @@ section .data
 	black_color dw      0
     last_dir    dw      0
     draw_color  dw      0
+    pixel_pad0   db      0
 	pixel_color dw      0
+    pixel_pad1   dw      0
 	padding 	dw 		0
     seconds     db      1
     totaltime   db      1
@@ -24,6 +26,7 @@ section .data
     se_color    dw      11
     sw_color    dw      64
     start_text  db      '<Presione cualquier tecla para iniciar>',0
+    erase_flag       db      0
 
 section .text
 _start:
@@ -70,8 +73,9 @@ _start:
     mov word [sw_color],64
 	mov byte [seconds], 1
     mov byte [totaltime], 1
-	
-	
+	mov word [draw_color],0
+	mov byte [draw],0
+    mov byte [erase_flag], 0
 	;set random pos
     mov ah, 02h
     int 1ah;
@@ -140,12 +144,17 @@ handle_keys:
 	cmp ah, 0x13 ;R
     je handle_restart
 
+    cmp ah, 0x2c ;Z
+    je handle_z
+
     jmp readNextChar
 
 handle_space:
     not byte [draw]
     jmp readNextChar
-
+handle_z:
+    not byte [erase_flag]
+    jmp readNextChar
 handle_restart:
 	
 	call setScreenToBlack
@@ -161,14 +170,22 @@ handle_north:
     call draw_Images
     pop di
     
+    cmp byte [erase_flag],0 ;check erase
+    jne erase_n
+    
+
     cmp byte [draw],0 ;check draw
     je not_draw_n
     jne draw_n
+
     not_draw_n:
-	call make_color_black
+	call not_draw
 	jmp continue_n
 
-    
+    erase_n:
+    call make_color_black
+    jmp continue_n
+
     draw_n:
 
         cmp byte [last_dir],0x50   ;check if last dir was south
@@ -225,13 +242,20 @@ handle_south:
     mov si, DownCommand
     call draw_Images
     pop di
-    
+
+    cmp byte [erase_flag],0 ;check erase
+    jne erase_s
+
     cmp byte [draw],0 ;check draw
         je not_draw_s
         jne draw_s
         not_draw_s:
-        call make_color_black
+        call not_draw
         jmp continue_s
+
+        erase_s:
+            call make_color_black
+            jmp continue_s
 
         draw_s:
         cmp byte [last_dir],0x48   ;check if last dir was south
@@ -288,13 +312,18 @@ handle_east:
     call draw_Images
     pop di
  
+    cmp byte [erase_flag],0 ;heck erase
+    jne erase_e
+
     cmp byte [draw],0 ;check draw
         je not_draw_e
         jne draw_e
         not_draw_e:
-        call make_color_black
+        call not_draw
         jmp continue_e
-
+        erase_e:
+            call make_color_black
+            jmp continue_e
         draw_e:
         cmp byte [last_dir],0x4b   ;check if last dir was south
         je back_to_east_color                   ;if last dir was south dont check color
@@ -348,14 +377,20 @@ handle_west:
     mov si, LeftCommand
     call draw_Images
     pop di
-    
+
+    cmp byte [erase_flag],0 ;check erase
+    jne erase_w
+
     cmp byte [draw],0 ;check draw
         je not_draw_w
         jne draw_w
         not_draw_w:
-        call make_color_black
+        call not_draw
         jmp continue_w
 
+        erase_w:
+            call make_color_black
+            jmp continue_w
         draw_w:
         cmp byte [last_dir],0x4d   ;check if last dir was south
         je back_to_west_color                   ;if last dir was south dont check color
@@ -412,13 +447,18 @@ handle_north_east:
     call draw_Images
     pop di
     
+    cmp byte [erase_flag],0 ;check erase
+    jne erase_ne
+    
     cmp byte [draw],0 ;check draw
     je not_draw_ne
     jne draw_ne
     not_draw_ne:
-	call make_color_black
+	call not_draw
 	jmp continue_ne
-
+    erase_ne:
+        call make_color_black
+        jmp continue_ne
     
     draw_ne:
         cmp byte [last_dir], 0x10   ;check if last dir was sw 
@@ -475,14 +515,19 @@ handle_north_west:
     mov si, ACommand
     call draw_Images
     pop di
-    
+
+    cmp byte [erase_flag],0 ;check erase
+    jne erase_nw
+
     cmp byte [draw],0 ;check draw
     je not_draw_nw
     jne draw_nw
     not_draw_nw:
-	call make_color_black
+	call not_draw
 	jmp continue_nw
-
+    erase_nw:
+        call make_color_black
+        jmp continue_nw
     
     draw_nw:
         cmp byte [last_dir], 0x12   ;check if last dir was se
@@ -541,13 +586,18 @@ handle_south_west:
     call draw_Images
     pop di
     
+    cmp byte [erase_flag],0 ;check erase
+    jne erase_sw
+
     cmp byte [draw],0 ;check draw
     je not_draw_sw
     jne draw_sw
     not_draw_sw:
-	call make_color_black
+	call not_draw
 	jmp continue_sw
-
+    erase_sw:
+        call make_color_black
+        jmp continue_sw
     
     draw_sw:
         cmp byte [last_dir], 0x20   ;check if last dir was sw 
@@ -604,14 +654,19 @@ handle_south_east:
     mov si, ECommand
     call draw_Images
     pop di
-    
+        
+    cmp byte [erase_flag],0 ;check erase
+    jne erase_se
+
     cmp byte [draw],0 ;check draw
     je not_draw_se
     jne draw_se
     not_draw_se:
-	call make_color_black
+	call not_draw
 	jmp continue_se
-
+    erase_se:
+        call make_color_black
+        jmp continue_se
     
     draw_se:
         cmp byte [last_dir], 0x1e   ;check if last dir was sw 
@@ -767,7 +822,21 @@ print_win:
 	add word [pixel_color], -10
 	call animation_loop
 	ret
-
+not_draw:
+    call check_current_Pixel
+    mov byte [draw_color], al
+    ret    
+check_current_Pixel:
+    mov word cx, [x_coord]
+    mov word dx, [y_coord]
+    
+    imul cx,6
+    imul dx,6
+    inc word cx
+    inc word cx
+    inc word dx
+    call getPixelColor
+    ret
 getPixelColor:
         ; Inputs:
         ;   CX = x-coordinate
@@ -797,4 +866,4 @@ end:
 	jmp $
 	nop
 %include "DrawFunctions.asm";
-times (10*512)-($-$$) db 0 ;kernel must have size multiple of 512 so let's pad it to the correct size
+times (12*512)-($-$$) db 0 ;kernel must have size multiple of 512 so let's pad it to the correct size
