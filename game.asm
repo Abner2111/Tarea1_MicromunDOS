@@ -98,7 +98,7 @@ handle_keys:
     je handle_north_east
 
 	cmp ah,  0x1e ;a nw
-    je handle_east
+    je handle_north_west
 
 	cmp ah,  0x12 ;e se
     je handle_south_east
@@ -441,6 +441,70 @@ handle_north_east:
             dec word    [y_coord] ;decrease ycoord
             inc word    [x_coord] ;increase xcoord
 			mov byte    [last_dir],0x20
+            jmp draw_turtle_caller
+handle_north_west:
+    
+    push 10
+    mov si, UpCommand
+    call draw_Images
+    pop di
+    
+    cmp byte [draw],0 ;check draw
+    je not_draw_nw
+    jne draw_nw
+    not_draw_nw:
+	call make_color_black
+	jmp continue_nw
+
+    
+    draw_nw:
+        cmp byte [last_dir], 0x12   ;check if last dir was se
+        je back_to_north_west_color                   ;if last dir was south dont check color
+        
+
+        check_north_west_color:
+
+            ;CHECKING PIXEL COLOR
+            mov word ax, [y_coord] ;moving y_cord to ax
+            add word ax, -1 ;the next y coord place where the turtle will be
+            mov word cx, [x_coord] ;mov next to x_coord
+            mov word dx, ax
+            add word cx, -1
+            add word cx, 1 ;offset
+            add word dx, 1 ;offset
+            ;scaling to turtle size
+            mov ax, 6
+            imul cx, ax
+            imul dx, ax
+
+            call getPixelColor
+            
+            mov byte [pixel_color], al
+
+            cmp byte [black_color], al     ;si el color es negro, continuar a dibujar en color norte
+            je back_to_north_west_color
+           
+			jmp handle_restart
+
+            
+        
+        back_to_north_west_color:
+        mov word ax, [nw_color]
+        mov word [draw_color], ax
+
+        continue_nw:
+        push word [draw_color]  ;COLOR  ;COLOR
+        push word [x_coord] ;X-POS
+        push word [y_coord]  ;Y-POS
+        call drawBox
+        pop di
+        pop di
+        pop di
+        
+        change_turtle_pos_nw:
+            dec word    [y_coord] ;decrease ycoord
+            dec word    [x_coord] ;increase xcoord
+			mov byte    [last_dir],0x12
             jmp draw_turtle_caller
 
 handle_south_west:
