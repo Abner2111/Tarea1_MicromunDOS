@@ -135,13 +135,9 @@ handle_north:
             je back_to_north_color
 			
 
-            push word [pixel_color]
-            push word 0 ;X-POS
-            push word 0  ;Y-POS
-            call drawBox
-            pop di;Recordar hacer pop, da igual el registro siempre que no este en uso
-            pop di
-            pop di
+	push 0ah; animacion de ganar
+	call drawScreen_Progressive
+	pop di
         
         back_to_north_color:
         mov word ax, [n_color]
@@ -203,13 +199,10 @@ handle_south:
             je back_to_south_color
 
 
-            push word [pixel_color]
-            push word 0 ;X-POS
-            push word 0  ;Y-POS
-            call drawBox
-            pop di;Recordar hacer pop, da igual el registro siempre que no este en uso
-            pop di
-            pop di
+	push 0ah; animacion de ganar
+	call drawScreen_Progressive
+	pop di
+	
         back_to_south_color:
         mov word ax, [s_color]
         mov word [draw_color], ax
@@ -271,13 +264,10 @@ handle_east:
             je back_to_east_color
 
 
-            push word [pixel_color]
-            push word 0 ;X-POS
-            push word 0  ;Y-POS
-            call drawBox
-            pop di;Recordar hacer pop, da igual el registro siempre que no este en uso
-            pop di
-            pop di
+	push 0ah; animacion de ganar
+	call drawScreen_Progressive
+	pop di
+	
         back_to_east_color:
         mov word ax, [e_color]
         mov word [draw_color], ax
@@ -339,13 +329,10 @@ handle_west:
             je back_to_west_color
 
 
-            push word [pixel_color]
-            push word 0 ;X-POS
-            push word 0  ;Y-POS
-            call drawBox
-            pop di;Recordar hacer pop, da igual el registro siempre que no este en uso
-            pop di
-            pop di
+	push 0ah; animacion de ganar
+	call drawScreen_Progressive
+	pop di
+	
         back_to_west_color:
         mov word ax, [w_color]
         mov word [draw_color], ax
