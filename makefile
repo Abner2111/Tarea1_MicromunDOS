@@ -30,3 +30,6 @@ q1:
 	nasm -f bin build/bootloader.asm -o build/bootloader.bin
 	cat build/bootloader.bin build/game.bin > build/micromundos.bin
 	qemu-system-x86_64 -fda build/micromundos.bin
+	
+mount: 
+	sudo dd if=build/result.img of=/dev/sdb bs=512 count=18
