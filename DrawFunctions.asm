@@ -844,6 +844,25 @@ animation_loop:
 	cmp byte [draw],0
     jne animation_loop
 	ret
+print_start:
+	print_loop:
+		; Load character from string
+		lodsb
+
+		; Check for null terminator
+		cmp al, 0
+		je print_done
+
+		; Call BIOS teletype function to print the character
+		mov ah, 0Eh     ; Function code for teletype
+		mov bh, 1       ; Page number (0 for default)
+		mov bl, 15      ; Color attribute (white on black)
+		int 10h
+
+		; Repeat for next character
+		jmp print_loop
+	print_done:
+	ret												
 LeftCommand: incbin "LeftCommand.bin"
 DownCommand: incbin "DownCommand.bin"
 RigthCommand: incbin "RigthCommand.bin"

@@ -23,10 +23,27 @@ section .data
     nw_color    dw      1
     se_color    dw      11
     sw_color    dw      64
-
+    start_text  db      '<Presione cualquier tecla para iniciar>',0
 
 section .text
 _start:
+    xor ax, ax      ;setting ax to 0
+    mov ah, 0       ;Set display mode
+    mov al, 13h     ;13h = 320x200, 256 colors
+    int  0x10       ;Video BIOS Services
+    
+    mov si, start_text
+    call print_start
+    pop di
+    waitForStart:
+    mov ah, 1
+        int 0x16 ;needed for consistent behavior
+        jz waitForStart
+    
+    ; Return to text mode
+    mov ax, 0003h
+    int 10h
+
     xor ax, ax      ;setting ax to 0
     mov ah, 0       ;Set display mode
     mov al, 13h     ;13h = 320x200, 256 colors
@@ -54,10 +71,6 @@ _start:
     ;set timer
     mov ax, 50
     mov [totaltime],ax
-    
-
-    
-    
     
     push 11         ;COLOR
     push word [x_coord]  ;X-POS
